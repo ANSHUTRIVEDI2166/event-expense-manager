@@ -1,223 +1,168 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import '../providers/event_provider.dart';
+import '../providers/supabase_service.dart';
 import '../models/event.dart';
-import 'add_expense_screen.dart';
+import 'request_expense_screen.dart'; // Updated import
 
-class EventDetailsScreen extends StatelessWidget {
+class EventDetailsScreen extends StatefulWidget {
   final Event event;
 
   const EventDetailsScreen({super.key, required this.event});
 
   @override
+  State<EventDetailsScreen> createState() => _EventDetailsScreenState();
+}
+
+class _EventDetailsScreenState extends State<EventDetailsScreen> {
+  final SupabaseService _supabaseService = SupabaseService();
+  late Future<List<Expense>> _expensesFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _expensesFuture = _supabaseService.getExpensesForEvent(widget.event.id);
+  }
+
+  // Function to refresh the expenses list
+  void _refreshExpenses() {
+    setState(() {
+      _expensesFuture = _supabaseService.getExpensesForEvent(widget.event.id);
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(event.name),
+        title: Text(widget.event.name),
         backgroundColor: Theme.of(context).primaryColor,
         foregroundColor: Colors.white,
       ),
-      body: Consumer<EventProvider>(
-        builder: (context, eventProvider, child) {
-          final currentEvent = eventProvider.events.firstWhere(
-            (e) => e.id == event.id,
-            orElse: () => event,
-          );
-
-          return SingleChildScrollView(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                // Event Info Card
-                Card(
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'Event Details',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                        _buildInfoRow(
-                          Icons.event,
-                          'Event Name',
-                          currentEvent.name,
-                        ),
-                        _buildInfoRow(
-                          Icons.description,
-                          'Description',
-                          currentEvent.description,
-                        ),
-                        _buildInfoRow(
-                          Icons.calendar_today,
-                          'Date',
-                          _formatDate(currentEvent.date),
-                        ),
-                        _buildInfoRow(
-                          Icons.location_on,
-                          'Venue',
-                          currentEvent.venue,
-                        ),
-                        _buildInfoRow(
-                          Icons.person,
-                          'Organizer',
-                          currentEvent.organizer,
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-
-                const SizedBox(height: 16),
-
-                // Budget Summary Card
-                Card(
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'Budget Summary',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            const Text(
-                              'Total Expenses:',
-                              style: TextStyle(fontSize: 16),
-                            ),
-                            Text(
-                              '₹${currentEvent.totalExpenses.toStringAsFixed(2)}',
-                              style: const TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.green,
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 8),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            const Text(
-                              'Number of Expenses:',
-                              style: TextStyle(fontSize: 16),
-                            ),
-                            Text(
-                              currentEvent.expenses.length.toString(),
-                              style: const TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-
-                const SizedBox(height: 16),
-
-                // Expenses Section
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Event Info Card (displays instantly)
+            Card(
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      'Expenses',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    ElevatedButton.icon(
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) =>
-                                AddExpenseScreen(eventId: event.id),
-                          ),
-                        );
-                      },
-                      icon: const Icon(Icons.add),
-                      label: const Text('Add Expense'),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Theme.of(context).primaryColor,
-                        foregroundColor: Colors.white,
-                      ),
-                    ),
+                    const Text('Event Details',
+                        style: TextStyle(
+                            fontSize: 18, fontWeight: FontWeight.bold)),
+                    const SizedBox(height: 16),
+                    _buildInfoRow(Icons.event, 'Event Name', widget.event.name),
+                    _buildInfoRow(Icons.description, 'Description',
+                        widget.event.description),
+                    _buildInfoRow(Icons.calendar_today, 'Date',
+                        _formatDate(widget.event.date)),
+                    _buildInfoRow(
+                        Icons.location_on, 'Venue', widget.event.venue),
+                    _buildInfoRow(
+                        Icons.person, 'Organizer', widget.event.organizer),
                   ],
                 ),
-
-                const SizedBox(height: 16),
-
-                // Expenses List
-                currentEvent.expenses.isEmpty
-                    ? const Card(
-                        child: Padding(
-                          padding: EdgeInsets.all(32),
-                          child: Column(
-                            children: [
-                              Icon(
-                                Icons.receipt_long,
-                                size: 48,
-                                color: Colors.grey,
-                              ),
-                              SizedBox(height: 16),
-                              Text(
-                                'No expenses yet!',
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  color: Colors.grey,
-                                ),
-                              ),
-                              SizedBox(height: 8),
-                              Text(
-                                'Tap "Add Expense" to track your event costs',
-                                style: TextStyle(
-                                  fontSize: 14,
-                                  color: Colors.grey,
-                                ),
-                                textAlign: TextAlign.center,
-                              ),
-                            ],
-                          ),
-                        ),
-                      )
-                    : ListView.builder(
-                        shrinkWrap: true,
-                        physics: const NeverScrollableScrollPhysics(),
-                        itemCount: currentEvent.expenses.length,
-                        itemBuilder: (context, index) {
-                          final expense = currentEvent.expenses[index];
-                          return _buildExpenseCard(
-                            context,
-                            expense,
-                            eventProvider,
-                          );
-                        },
+              ),
+            ),
+            const SizedBox(height: 16),
+            // Expenses Section Header
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                const Text('Expenses',
+                    style:
+                        TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+                ElevatedButton.icon(
+                  onPressed: () async {
+                    await Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) =>
+                            RequestExpenseScreen(eventId: widget.event.id),
                       ),
+                    );
+                    // When we return from the request screen, refresh the list
+                    _refreshExpenses();
+                  },
+                  icon: const Icon(Icons.add),
+                  label: const Text('Add Expense'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Theme.of(context).primaryColor,
+                    foregroundColor: Colors.white,
+                  ),
+                ),
               ],
             ),
-          );
-        },
+            const SizedBox(height: 16),
+            // FutureBuilder for the Expenses List
+            FutureBuilder<List<Expense>>(
+              future: _expensesFuture,
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator());
+                }
+                if (snapshot.hasError) {
+                  return Center(child: Text('Error: ${snapshot.error}'));
+                }
+                final expenses = snapshot.data;
+                if (expenses == null || expenses.isEmpty) {
+                  return const Center(
+                      child: Padding(
+                    padding: EdgeInsets.all(32.0),
+                    child: Text('No expenses submitted yet.'),
+                  ));
+                }
+
+                final totalApprovedExpenses = expenses
+                    .where((exp) => exp.status == 'approved')
+                    .fold(0.0, (sum, item) => sum + item.amount);
+
+                return Column(
+                  children: [
+                    // Budget Summary Card
+                    Card(
+                      child: Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            const Text('Total Approved Expenses:',
+                                style: TextStyle(fontSize: 16)),
+                            Text(
+                              '₹${totalApprovedExpenses.toStringAsFixed(2)}',
+                              style: const TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.green),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    // Expenses List
+                    ListView.builder(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      itemCount: expenses.length,
+                      itemBuilder: (context, index) {
+                        final expense = expenses[index];
+                        return _buildExpenseCard(context, expense);
+                      },
+                    ),
+                  ],
+                );
+              },
+            ),
+          ],
+        ),
       ),
     );
   }
+
+  // --- Helper Widgets ---
 
   Widget _buildInfoRow(IconData icon, String label, String value) {
     return Padding(
@@ -244,149 +189,55 @@ class EventDetailsScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildExpenseCard(
-    BuildContext context,
-    Expense expense,
-    EventProvider eventProvider,
-  ) {
+  Widget _buildExpenseCard(BuildContext context, Expense expense) {
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
       child: ListTile(
         leading: CircleAvatar(
-          backgroundColor: _getCategoryColor(expense.category),
-          child: Icon(
-            _getCategoryIcon(expense.category),
-            color: Colors.white,
-            size: 20,
-          ),
+          backgroundColor: _getStatusColor(expense.status),
+          child: Icon(_getStatusIcon(expense.status),
+              color: Colors.white, size: 20),
         ),
-        title: Text(
-          expense.title,
-          style: const TextStyle(fontWeight: FontWeight.bold),
+        title: Text(expense.title,
+            style: const TextStyle(fontWeight: FontWeight.bold)),
+        subtitle: Text(
+            'Status: ${expense.status[0].toUpperCase()}${expense.status.substring(1)}'),
+        trailing: Text(
+          '₹${expense.amount.toStringAsFixed(2)}',
+          style: const TextStyle(
+              fontSize: 16, fontWeight: FontWeight.bold, color: Colors.green),
         ),
-        subtitle: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text('Vendor: ${expense.vendorName}'),
-            Text('Category: ${expense.category}'),
-            Text('Date: ${_formatDate(expense.date)}'),
-            if (expense.description != null && expense.description!.isNotEmpty)
-              Text('Note: ${expense.description}'),
-          ],
-        ),
-        trailing: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.end,
-          children: [
-            Text(
-              '₹${expense.amount.toStringAsFixed(2)}',
-              style: const TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                color: Colors.green,
-              ),
-            ),
-            IconButton(
-              icon: const Icon(Icons.delete, color: Colors.red),
-              onPressed: () {
-                _showDeleteConfirmation(context, expense, eventProvider);
-              },
-              constraints: const BoxConstraints(minWidth: 24, minHeight: 24),
-              padding: EdgeInsets.zero,
-            ),
-          ],
-        ),
-        isThreeLine: true,
       ),
     );
   }
 
-  void _showDeleteConfirmation(
-    BuildContext context,
-    Expense expense,
-    EventProvider eventProvider,
-  ) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('Delete Expense'),
-          content: Text('Are you sure you want to delete "${expense.title}"?'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Cancel'),
-            ),
-            TextButton(
-              onPressed: () {
-                eventProvider.deleteExpense(event.id, expense.id);
-                Navigator.of(context).pop();
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Expense deleted successfully!'),
-                    backgroundColor: Colors.red,
-                  ),
-                );
-              },
-              child: const Text('Delete'),
-            ),
-          ],
-        );
-      },
-    );
+  String _formatDate(DateTime date) {
+    return '${date.day}/${date.month}/${date.year}';
   }
 
-  Color _getCategoryColor(String category) {
-    switch (category.toLowerCase()) {
-      case 'venue':
-        return Colors.blue;
-      case 'food & beverages':
-        return Colors.orange;
-      case 'decoration':
-        return Colors.pink;
-      case 'sound & lighting':
-        return Colors.purple;
-      case 'entertainment':
+  Color _getStatusColor(String status) {
+    switch (status) {
+      case 'approved':
         return Colors.green;
-      case 'transportation':
-        return Colors.indigo;
-      case 'marketing':
-        return Colors.teal;
-      case 'security':
-        return Colors.brown;
-      case 'photography':
-        return Colors.cyan;
+      case 'pending':
+        return Colors.orange;
+      case 'rejected':
+        return Colors.red;
       default:
         return Colors.grey;
     }
   }
 
-  IconData _getCategoryIcon(String category) {
-    switch (category.toLowerCase()) {
-      case 'venue':
-        return Icons.location_on;
-      case 'food & beverages':
-        return Icons.restaurant;
-      case 'decoration':
-        return Icons.palette;
-      case 'sound & lighting':
-        return Icons.music_note;
-      case 'entertainment':
-        return Icons.theater_comedy;
-      case 'transportation':
-        return Icons.directions_bus;
-      case 'marketing':
-        return Icons.campaign;
-      case 'security':
-        return Icons.security;
-      case 'photography':
-        return Icons.camera_alt;
+  IconData _getStatusIcon(String status) {
+    switch (status) {
+      case 'approved':
+        return Icons.check_circle;
+      case 'pending':
+        return Icons.hourglass_empty;
+      case 'rejected':
+        return Icons.cancel;
       default:
-        return Icons.receipt;
+        return Icons.help;
     }
-  }
-
-  String _formatDate(DateTime date) {
-    return '${date.day}/${date.month}/${date.year}';
   }
 }
