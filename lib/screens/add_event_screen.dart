@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
-import '../providers/event_provider.dart';
 import '../models/event.dart';
+import '../providers/supabase_service.dart'; // Import the new service
 
 class AddEventScreen extends StatefulWidget {
   const AddEventScreen({super.key});
@@ -18,6 +17,10 @@ class _AddEventScreenState extends State<AddEventScreen> {
   final _organizerController = TextEditingController();
 
   DateTime _selectedDate = DateTime.now();
+  bool _isLoading = false; // State variable to track loading
+
+  // Create an instance of the service
+  final SupabaseService _supabaseService = SupabaseService();
 
   @override
   void dispose() {
@@ -26,6 +29,61 @@ class _AddEventScreenState extends State<AddEventScreen> {
     _venueController.dispose();
     _organizerController.dispose();
     super.dispose();
+  }
+
+  Future<void> _saveEvent() async {
+    if (_formKey.currentState!.validate()) {
+      setState(() => _isLoading = true);
+
+      final event = Event(
+        id: '', // Supabase generates the UUID, so this is a placeholder
+        name: _nameController.text,
+        description: _descriptionController.text,
+        date: _selectedDate,
+        venue: _venueController.text,
+        organizer: _organizerController.text,
+      );
+
+      try {
+        await _supabaseService.createEvent(event);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Event created successfully!'),
+              backgroundColor: Colors.green,
+            ),
+          );
+          Navigator.pop(context);
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Error creating event: $e'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      } finally {
+        if (mounted) {
+          setState(() => _isLoading = false);
+        }
+      }
+    }
+  }
+
+  Future<void> _selectDate() async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: _selectedDate,
+      firstDate: DateTime.now(),
+      lastDate: DateTime(2030),
+    );
+    if (picked != null && picked != _selectedDate) {
+      setState(() {
+        _selectedDate = picked;
+      });
+    }
   }
 
   @override
@@ -119,63 +177,27 @@ class _AddEventScreenState extends State<AddEventScreen> {
                 ),
               ),
               const SizedBox(height: 32),
-              ElevatedButton(
-                onPressed: _saveEvent,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Theme.of(context).primaryColor,
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                ),
-                child: const Text(
-                  'Create Event',
-                  style: TextStyle(fontSize: 16),
-                ),
-              ),
+              _isLoading
+                  ? const Center(child: CircularProgressIndicator())
+                  : ElevatedButton(
+                      onPressed: _saveEvent,
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Theme.of(context).primaryColor,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(vertical: 16),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                      ),
+                      child: const Text(
+                        'Create Event',
+                        style: TextStyle(fontSize: 16),
+                      ),
+                    ),
             ],
           ),
         ),
       ),
     );
-  }
-
-  Future<void> _selectDate() async {
-    final DateTime? picked = await showDatePicker(
-      context: context,
-      initialDate: _selectedDate,
-      firstDate: DateTime.now(),
-      lastDate: DateTime(2030),
-    );
-    if (picked != null && picked != _selectedDate) {
-      setState(() {
-        _selectedDate = picked;
-      });
-    }
-  }
-
-  void _saveEvent() {
-    if (_formKey.currentState!.validate()) {
-      final event = Event(
-        id: DateTime.now().millisecondsSinceEpoch.toString(),
-        name: _nameController.text,
-        description: _descriptionController.text,
-        date: _selectedDate,
-        venue: _venueController.text,
-        organizer: _organizerController.text,
-      );
-
-      Provider.of<EventProvider>(context, listen: false).addEvent(event);
-
-      Navigator.pop(context);
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Event created successfully!'),
-          backgroundColor: Colors.green,
-        ),
-      );
-    }
   }
 }
