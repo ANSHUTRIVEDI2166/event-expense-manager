@@ -1,6 +1,4 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
 import '../models/event.dart';
 import '../providers/supabase_service.dart';
 
@@ -21,11 +19,11 @@ class _RequestExpenseScreenState extends State<RequestExpenseScreen> {
 
   String _selectedCategory = ExpenseCategory.categories.first;
   DateTime _selectedDate = DateTime.now();
-  File? _receiptImage;
+  // Removed receipt image logic
   bool _isLoading = false;
 
   final SupabaseService _supabaseService = SupabaseService();
-  final ImagePicker _picker = ImagePicker();
+  // Removed image picker
 
   @override
   void dispose() {
@@ -36,21 +34,10 @@ class _RequestExpenseScreenState extends State<RequestExpenseScreen> {
     super.dispose();
   }
 
-  Future<void> _pickReceipt() async {
-    final XFile? pickedFile =
-        await _picker.pickImage(source: ImageSource.gallery);
-    if (pickedFile != null) {
-      setState(() => _receiptImage = File(pickedFile.path));
-    }
-  }
+  // Removed pickReceipt method
 
   Future<void> _submitRequest() async {
-    if (_receiptImage == null) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
-          content: Text('Please attach a receipt'),
-          backgroundColor: Colors.red));
-      return;
-    }
+    // Removed receipt image validation
     if (_formKey.currentState!.validate()) {
       setState(() => _isLoading = true);
       try {
@@ -64,7 +51,7 @@ class _RequestExpenseScreenState extends State<RequestExpenseScreen> {
           description: _descriptionController.text.isEmpty
               ? null
               : _descriptionController.text,
-          receiptImage: _receiptImage!,
+          // Removed receiptImage
         );
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
@@ -177,26 +164,7 @@ class _RequestExpenseScreenState extends State<RequestExpenseScreen> {
                       prefixIcon: Icon(Icons.description)),
                   maxLines: 3),
               const SizedBox(height: 16),
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                    border: Border.all(color: Colors.grey.shade400),
-                    borderRadius: BorderRadius.circular(8)),
-                child: _receiptImage == null
-                    ? Center(
-                        child: ElevatedButton.icon(
-                            onPressed: _pickReceipt,
-                            icon: const Icon(Icons.attach_file),
-                            label: const Text('Attach Receipt')))
-                    : Column(children: [
-                        Image.file(_receiptImage!,
-                            height: 200, fit: BoxFit.cover),
-                        const SizedBox(height: 8),
-                        TextButton(
-                            onPressed: _pickReceipt,
-                            child: const Text('Change Receipt'))
-                      ]),
-              ),
+              // Receipt upload UI removed
               const SizedBox(height: 32),
               _isLoading
                   ? const Center(child: CircularProgressIndicator())

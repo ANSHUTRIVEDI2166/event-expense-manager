@@ -1,5 +1,4 @@
-import 'dart:io';
-import 'package:supabase_flutter/supabase_flutter.dart';
+// Removed unused imports
 import '../models/event.dart';
 import '../models/expense.dart'; // ✅ Added missing Expense import
 import '../main.dart'; // Import main.dart to access the global supabase client
@@ -21,21 +20,31 @@ class SupabaseService {
   // --- Event Functions ---
   Future<List<Event>> getEvents() async {
     final userId = supabase.auth.currentUser!.id;
-    final eventMemberships = await supabase
-        .from('event_members')
-        .select('event_id')
-        .eq('user_id', userId);
+    // Get user role
+    final profile = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', userId)
+        .single();
+    final role = profile != null ? profile['role'] : null;
 
-    final eventIds =
-        eventMemberships.map((e) => e['event_id'] as String).toList();
-
-    if (eventIds.isEmpty) return [];
-
-    // ✅ FIXED: use inFilter instead of in_
-    final eventsData =
-        await supabase.from('events').select().inFilter('id', eventIds);
-
-    return eventsData.map((data) => Event.fromJson(data)).toList();
+    if (role == 'counselor') {
+      // Counselors see all events
+      final eventsData = await supabase.from('events').select();
+      return eventsData.map((data) => Event.fromJson(data)).toList();
+    } else {
+      // Students see only their member events
+      final eventMemberships = await supabase
+          .from('event_members')
+          .select('event_id')
+          .eq('user_id', userId);
+      final eventIds =
+          eventMemberships.map((e) => e['event_id'] as String).toList();
+      if (eventIds.isEmpty) return [];
+      final eventsData =
+          await supabase.from('events').select().inFilter('id', eventIds);
+      return eventsData.map((data) => Event.fromJson(data)).toList();
+    }
   }
 
   Future<void> createEvent(Event event) async {
@@ -57,6 +66,19 @@ class SupabaseService {
     await supabase
         .from('event_members')
         .insert({'event_id': eventId, 'user_id': userId, 'role': 'organizer'});
+
+    // Add all counselors as event members
+    final counselors =
+        await supabase.from('profiles').select('id').eq('role', 'counselor');
+    if (counselors != null && counselors is List) {
+      for (final counselor in counselors) {
+        await supabase.from('event_members').insert({
+          'event_id': eventId,
+          'user_id': counselor['id'],
+          'role': 'counselor'
+        });
+      }
+    }
   }
 
   // --- Expense Functions ---
@@ -78,21 +100,9 @@ class SupabaseService {
     required String category,
     required DateTime date,
     String? description,
-    required File receiptImage,
+    // Removed receiptImage parameter
   }) async {
     final userId = supabase.auth.currentUser!.id;
-    final fileExtension = receiptImage.path.split('.').last;
-    final fileName = '${DateTime.now().millisecondsSinceEpoch}.$fileExtension';
-    final filePath = '$eventId/$fileName';
-
-    // ✅ FIXED: added fileOptions to upload
-    await supabase.storage.from('receipts').upload(
-          filePath,
-          receiptImage,
-          fileOptions: const FileOptions(cacheControl: '3600', upsert: false),
-        );
-
-    final receiptUrl = supabase.storage.from('receipts').getPublicUrl(filePath);
 
     await supabase.from('expense_requests').insert({
       'event_id': eventId,
@@ -102,8 +112,8 @@ class SupabaseService {
       'vendor_name': vendorName,
       'category': category,
       'created_at': date.toIso8601String(),
-      'description': description,
-      'receipt_url': receiptUrl,
+      // 'description': removed
+      // 'receipt_url': removed
       'status': 'pending',
     });
   }
