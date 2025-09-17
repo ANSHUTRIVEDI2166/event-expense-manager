@@ -90,70 +90,76 @@ class _ReviewExpenseScreenState extends State<ReviewExpenseScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Review: ${widget.expense.title}')),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            if (widget.expense.receiptUrl != null)
-              Center(
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(12),
-                  child: Image.network(
-                    widget.expense.receiptUrl!,
-                    fit: BoxFit.cover,
-                    height: 250,
-                    loadingBuilder: (context, child, progress) {
-                      return progress == null
-                          ? child
-                          : const Center(child: CircularProgressIndicator());
-                    },
-                  ),
-                ),
-              ),
-            const SizedBox(height: 24),
-            _buildDetailRow('Title', widget.expense.title),
-            _buildDetailRow(
-                'Amount', '₹${widget.expense.amount.toStringAsFixed(2)}'),
-            _buildDetailRow('Vendor', widget.expense.vendorName),
-            _buildDetailRow('Category', widget.expense.category),
-            if (widget.expense.description != null &&
-                widget.expense.description!.isNotEmpty)
-              _buildDetailRow('Description', widget.expense.description!),
-            const SizedBox(height: 40),
-            if (_isLoading)
-              const Center(child: CircularProgressIndicator())
-            else
-              Row(
-                children: [
-                  Expanded(
-                      child: ElevatedButton.icon(
-                          onPressed: _approveRequest,
-                          icon: const Icon(Icons.check),
-                          label: const Text('Approve'),
-                          style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.green,
-                              foregroundColor: Colors.white,
-                              padding:
-                                  const EdgeInsets.symmetric(vertical: 12)))),
-                  const SizedBox(width: 16),
-                  Expanded(
-                      child: ElevatedButton.icon(
-                          onPressed: _rejectRequest,
-                          icon: const Icon(Icons.close),
-                          label: const Text('Reject'),
-                          style: ElevatedButton.styleFrom(
-                              backgroundColor: Colors.red,
-                              foregroundColor: Colors.white,
-                              padding:
-                                  const EdgeInsets.symmetric(vertical: 12)))),
-                ],
-              ),
-          ],
+        appBar: AppBar(
+          title: Text('Review: ${widget.expense.title}'),
+          backgroundColor: Theme.of(context).primaryColor,
+          foregroundColor: Colors.white,
         ),
-      ),
-    );
+        body: SafeArea(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                if (widget.expense.receiptUrl != null)
+                  Center(
+                    child: ClipRRect(
+                      borderRadius: BorderRadius.circular(12),
+                      child: Image.network(
+                        widget.expense.receiptUrl!,
+                        fit: BoxFit.cover,
+                        height: 250,
+                        loadingBuilder: (context, child, progress) {
+                          return progress == null
+                              ? child
+                              : const Center(
+                                  child: CircularProgressIndicator());
+                        },
+                      ),
+                    ),
+                  ),
+                const SizedBox(height: 24),
+                _buildDetailRow('Title', widget.expense.title),
+                _buildDetailRow(
+                    'Amount', '₹${widget.expense.amount.toStringAsFixed(2)}'),
+                _buildDetailRow('Vendor', widget.expense.vendorName),
+                _buildDetailRow('Category', widget.expense.category),
+                if (widget.expense.description != null &&
+                    widget.expense.description!.isNotEmpty)
+                  _buildDetailRow('Description', widget.expense.description!),
+                const SizedBox(height: 40),
+                if (_isLoading)
+                  const Center(child: CircularProgressIndicator())
+                else
+                  Row(
+                    children: [
+                      Expanded(
+                          child: ElevatedButton.icon(
+                              onPressed: _approveRequest,
+                              icon: const Icon(Icons.check),
+                              label: const Text('Approve'),
+                              style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.green,
+                                  foregroundColor: Colors.white,
+                                  padding: const EdgeInsets.symmetric(
+                                      vertical: 12)))),
+                      const SizedBox(width: 16),
+                      Expanded(
+                          child: ElevatedButton.icon(
+                              onPressed: _rejectRequest,
+                              icon: const Icon(Icons.close),
+                              label: const Text('Reject'),
+                              style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.red,
+                                  foregroundColor: Colors.white,
+                                  padding: const EdgeInsets.symmetric(
+                                      vertical: 12)))),
+                    ],
+                  ),
+              ],
+            ),
+          ),
+        ));
   }
 
   Widget _buildDetailRow(String label, String value) {

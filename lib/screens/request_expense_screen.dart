@@ -85,101 +85,105 @@ class _RequestExpenseScreenState extends State<RequestExpenseScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-          title: const Text('Request Expense'),
-          backgroundColor: Theme.of(context).primaryColor,
-          foregroundColor: Colors.white),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              TextFormField(
-                  controller: _titleController,
-                  decoration: const InputDecoration(
-                      labelText: 'Expense Title',
-                      border: OutlineInputBorder(),
-                      prefixIcon: Icon(Icons.title)),
-                  validator: (v) =>
-                      v == null || v.isEmpty ? 'Please enter title' : null),
-              const SizedBox(height: 16),
-              TextFormField(
-                  controller: _amountController,
-                  decoration: const InputDecoration(
-                      labelText: 'Amount (₹)',
-                      border: OutlineInputBorder(),
-                      prefixIcon: Icon(Icons.currency_rupee)),
-                  keyboardType: TextInputType.number,
-                  validator: (v) {
-                    if (v == null || v.isEmpty) {
-                      return 'Please enter amount';
-                    }
-                    if (double.tryParse(v) == null) {
-                      return 'Enter a valid number';
-                    }
-                    if (double.parse(v) <= 0) {
-                      return 'Amount must be > 0';
-                    }
-                    return null;
-                  }),
-              const SizedBox(height: 16),
-              TextFormField(
-                  controller: _vendorController,
-                  decoration: const InputDecoration(
-                      labelText: 'Vendor Name',
-                      border: OutlineInputBorder(),
-                      prefixIcon: Icon(Icons.store)),
-                  validator: (v) =>
-                      v == null || v.isEmpty ? 'Please enter vendor' : null),
-              const SizedBox(height: 16),
-              DropdownButtonFormField<String>(
-                  initialValue: _selectedCategory,
-                  decoration: const InputDecoration(
-                      labelText: 'Category',
-                      border: OutlineInputBorder(),
-                      prefixIcon: Icon(Icons.category)),
-                  items: ExpenseCategory.categories
-                      .map((c) => DropdownMenuItem(value: c, child: Text(c)))
-                      .toList(),
-                  onChanged: (v) => setState(() => _selectedCategory = v!)),
-              const SizedBox(height: 16),
-              ListTile(
-                  leading: const Icon(Icons.calendar_today),
-                  title: const Text('Expense Date'),
-                  subtitle: Text(
-                      '${_selectedDate.day}/${_selectedDate.month}/${_selectedDate.year}'),
-                  trailing: const Icon(Icons.arrow_forward_ios),
-                  onTap: _selectDate,
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(8),
-                      side: BorderSide(color: Colors.grey.shade300))),
-              const SizedBox(height: 16),
-              TextFormField(
-                  controller: _descriptionController,
-                  decoration: const InputDecoration(
-                      labelText: 'Description (Optional)',
-                      border: OutlineInputBorder(),
-                      prefixIcon: Icon(Icons.description)),
-                  maxLines: 3),
-              const SizedBox(height: 16),
-              // Receipt upload UI removed
-              const SizedBox(height: 32),
-              _isLoading
-                  ? const Center(child: CircularProgressIndicator())
-                  : ElevatedButton(
-                      onPressed: _submitRequest,
-                      style: ElevatedButton.styleFrom(
-                          backgroundColor: Theme.of(context).primaryColor,
-                          foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(vertical: 16)),
-                      child: const Text('Submit Request',
-                          style: TextStyle(fontSize: 16))),
-            ],
+        appBar: AppBar(
+            title: const Text('Request Expense'),
+            backgroundColor: Theme.of(context).primaryColor,
+            foregroundColor: Colors.white),
+        body: SafeArea(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(16),
+            child: Form(
+              key: _formKey,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  TextFormField(
+                      controller: _titleController,
+                      decoration: const InputDecoration(
+                          labelText: 'Expense Title',
+                          border: OutlineInputBorder(),
+                          prefixIcon: Icon(Icons.title)),
+                      validator: (v) =>
+                          v == null || v.isEmpty ? 'Please enter title' : null),
+                  const SizedBox(height: 16),
+                  TextFormField(
+                      controller: _amountController,
+                      decoration: const InputDecoration(
+                          labelText: 'Amount (₹)',
+                          border: OutlineInputBorder(),
+                          prefixIcon: Icon(Icons.currency_rupee)),
+                      keyboardType: TextInputType.number,
+                      validator: (v) {
+                        if (v == null || v.isEmpty) {
+                          return 'Please enter amount';
+                        }
+                        if (double.tryParse(v) == null) {
+                          return 'Enter a valid number';
+                        }
+                        if (double.parse(v) <= 0) {
+                          return 'Amount must be > 0';
+                        }
+                        return null;
+                      }),
+                  const SizedBox(height: 16),
+                  TextFormField(
+                      controller: _vendorController,
+                      decoration: const InputDecoration(
+                          labelText: 'Vendor Name',
+                          border: OutlineInputBorder(),
+                          prefixIcon: Icon(Icons.store)),
+                      validator: (v) => v == null || v.isEmpty
+                          ? 'Please enter vendor'
+                          : null),
+                  const SizedBox(height: 16),
+                  DropdownButtonFormField<String>(
+                      initialValue: _selectedCategory,
+                      decoration: const InputDecoration(
+                          labelText: 'Category',
+                          border: OutlineInputBorder(),
+                          prefixIcon: Icon(Icons.category)),
+                      items: ExpenseCategory.categories
+                          .map(
+                              (c) => DropdownMenuItem(value: c, child: Text(c)))
+                          .toList(),
+                      onChanged: (v) => setState(() => _selectedCategory = v!)),
+                  const SizedBox(height: 16),
+                  ListTile(
+                      leading: const Icon(Icons.calendar_today),
+                      title: const Text('Expense Date'),
+                      subtitle: Text(
+                          '${_selectedDate.day}/${_selectedDate.month}/${_selectedDate.year}'),
+                      trailing: const Icon(Icons.arrow_forward_ios),
+                      onTap: _selectDate,
+                      shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(8),
+                          side: BorderSide(color: Colors.grey.shade300))),
+                  const SizedBox(height: 16),
+                  TextFormField(
+                      controller: _descriptionController,
+                      decoration: const InputDecoration(
+                          labelText: 'Description (Optional)',
+                          border: OutlineInputBorder(),
+                          prefixIcon: Icon(Icons.description)),
+                      maxLines: 3),
+                  const SizedBox(height: 16),
+                  // Receipt upload UI removed
+                  const SizedBox(height: 32),
+                  _isLoading
+                      ? const Center(child: CircularProgressIndicator())
+                      : ElevatedButton(
+                          onPressed: _submitRequest,
+                          style: ElevatedButton.styleFrom(
+                              backgroundColor: Theme.of(context).primaryColor,
+                              foregroundColor: Colors.white,
+                              padding:
+                                  const EdgeInsets.symmetric(vertical: 16)),
+                          child: const Text('Submit Request',
+                              style: TextStyle(fontSize: 16))),
+                ],
+              ),
+            ),
           ),
-        ),
-      ),
-    );
+        ));
   }
 }

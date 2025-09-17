@@ -55,37 +55,39 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
         ],
       ),
-      body: FutureBuilder(
-        future: _supabaseService.getUserProfile(),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator());
-          }
-          final userRole = snapshot.data?['role'];
+      body: SafeArea(
+        child: FutureBuilder(
+          future: _supabaseService.getUserProfile(),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const Center(child: CircularProgressIndicator());
+            }
+            final userRole = snapshot.data?['role'];
 
-          return RefreshIndicator(
-            onRefresh: () async {
-              setState(() {
-                _loadDataFuture = _loadData();
-              });
-            },
-            child: CustomScrollView(
-              slivers: [
-                if (userRole == 'counsellor')
-                  SliverToBoxAdapter(child: _buildCounsellorDashboard()),
-                const SliverToBoxAdapter(
-                  child: Padding(
-                    padding: EdgeInsets.fromLTRB(16, 16, 16, 8),
-                    child: Text('My Events',
-                        style: TextStyle(
-                            fontSize: 22, fontWeight: FontWeight.bold)),
+            return RefreshIndicator(
+              onRefresh: () async {
+                setState(() {
+                  _loadDataFuture = _loadData();
+                });
+              },
+              child: CustomScrollView(
+                slivers: [
+                  if (userRole == 'counsellor')
+                    SliverToBoxAdapter(child: _buildCounsellorDashboard()),
+                  const SliverToBoxAdapter(
+                    child: Padding(
+                      padding: EdgeInsets.fromLTRB(16, 16, 16, 8),
+                      child: Text('My Events',
+                          style: TextStyle(
+                              fontSize: 22, fontWeight: FontWeight.bold)),
+                    ),
                   ),
-                ),
-                EventsList(), // Using the Sliver version
-              ],
-            ),
-          );
-        },
+                  EventsList(), // Using the Sliver version
+                ],
+              ),
+            );
+          },
+        ),
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: () async {
