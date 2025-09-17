@@ -113,15 +113,19 @@ class _HomeScreenState extends State<HomeScreen> {
         ),
         SizedBox(
           height: 150,
-          child: FutureBuilder<List<Expense>>(
-            future: _supabaseService.getPendingRequests(),
+          child: StreamBuilder<List<Expense>>(
+            stream: _supabaseService.getPendingRequestsStream(),
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {
                 return const Center(child: CircularProgressIndicator());
               }
               final requests = snapshot.data;
               if (snapshot.hasError || requests == null || requests.isEmpty) {
-                return const Center(child: Text('No pending requests.'));
+                return const Center(
+                    child: Padding(
+                  padding: EdgeInsets.symmetric(horizontal: 16.0),
+                  child: Text('No pending requests.'),
+                ));
               }
               return ListView.builder(
                 scrollDirection: Axis.horizontal,
