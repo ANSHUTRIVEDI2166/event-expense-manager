@@ -70,150 +70,152 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text(widget.event.name),
-        backgroundColor: Theme.of(context).primaryColor,
-        foregroundColor: Colors.white,
-        actions: [
-          FutureBuilder<bool>(
-            future: _supabaseService.canUserDeleteEvent(widget.event.id),
-            builder: (context, snapshot) {
-              if (snapshot.data == true) {
-                return IconButton(
-                  icon: const Icon(Icons.delete),
-                  onPressed: () => _showDeleteConfirmation(context),
-                  tooltip: 'Delete Event',
-                );
-              }
-              return const SizedBox.shrink();
-            },
-          ),
-        ],
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Event Info Card (displays instantly)
-            Card(
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text('Event Details',
-                        style: TextStyle(
-                            fontSize: 18, fontWeight: FontWeight.bold)),
-                    const SizedBox(height: 16),
-                    _buildInfoRow(Icons.event, 'Event Name', widget.event.name),
-                    _buildInfoRow(Icons.description, 'Description',
-                        widget.event.description),
-                    _buildInfoRow(Icons.calendar_today, 'Date',
-                        _formatDate(widget.event.date)),
-                    _buildInfoRow(
-                        Icons.location_on, 'Venue', widget.event.venue),
-                    _buildInfoRow(
-                        Icons.person, 'Organizer', widget.event.organizer),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(height: 16),
-            // Expenses Section Header
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                const Text('Expenses',
-                    style:
-                        TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                ElevatedButton.icon(
-                  onPressed: () async {
-                    await Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) =>
-                            RequestExpenseScreen(eventId: widget.event.id),
-                      ),
-                    );
-                    // When we return from the request screen, refresh the list
-                    _refreshExpenses();
-                  },
-                  icon: const Icon(Icons.add),
-                  label: const Text('Add Expense'),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Theme.of(context).primaryColor,
-                    foregroundColor: Colors.white,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(height: 16),
-            // StreamBuilder for the Expenses List
-            StreamBuilder<List<Expense>>(
-              stream:
-                  _supabaseService.getExpensesForEventStream(widget.event.id),
+        appBar: AppBar(
+          title: Text(widget.event.name),
+          backgroundColor: Theme.of(context).primaryColor,
+          foregroundColor: Colors.white,
+          actions: [
+            FutureBuilder<bool>(
+              future: _supabaseService.canUserDeleteEvent(widget.event.id),
               builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator());
+                if (snapshot.data == true) {
+                  return IconButton(
+                    icon: const Icon(Icons.delete),
+                    onPressed: () => _showDeleteConfirmation(context),
+                    tooltip: 'Delete Event',
+                  );
                 }
-                if (snapshot.hasError) {
-                  return Center(child: Text('Error: ${snapshot.error}'));
-                }
-                final expenses = snapshot.data;
-                if (expenses == null || expenses.isEmpty) {
-                  return const Center(
-                      child: Padding(
-                    padding: EdgeInsets.all(32.0),
-                    child: Text('No expenses submitted yet.'),
-                  ));
-                }
-
-                final totalApprovedExpenses = expenses
-                    .where((exp) => exp.status == 'approved')
-                    .fold(0.0, (sum, item) => sum + item.amount);
-
-                return Column(
-                  children: [
-                    // Budget Summary Card
-                    Card(
-                      child: Padding(
-                        padding: const EdgeInsets.all(16),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            const Text('Total Approved Expenses:',
-                                style: TextStyle(fontSize: 16)),
-                            Text(
-                              '₹${totalApprovedExpenses.toStringAsFixed(2)}',
-                              style: const TextStyle(
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.green),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    // Expenses List
-                    ListView.builder(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      itemCount: expenses.length,
-                      itemBuilder: (context, index) {
-                        final expense = expenses[index];
-                        return _buildExpenseCard(context, expense);
-                      },
-                    ),
-                  ],
-                );
+                return const SizedBox.shrink();
               },
             ),
           ],
         ),
-      ),
-    );
+        body: SafeArea(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Event Info Card (displays instantly)
+                Card(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text('Event Details',
+                            style: TextStyle(
+                                fontSize: 18, fontWeight: FontWeight.bold)),
+                        const SizedBox(height: 16),
+                        _buildInfoRow(
+                            Icons.event, 'Event Name', widget.event.name),
+                        _buildInfoRow(Icons.description, 'Description',
+                            widget.event.description),
+                        _buildInfoRow(Icons.calendar_today, 'Date',
+                            _formatDate(widget.event.date)),
+                        _buildInfoRow(
+                            Icons.location_on, 'Venue', widget.event.venue),
+                        _buildInfoRow(
+                            Icons.person, 'Organizer', widget.event.organizer),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                // Expenses Section Header
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    const Text('Expenses',
+                        style: TextStyle(
+                            fontSize: 18, fontWeight: FontWeight.bold)),
+                    ElevatedButton.icon(
+                      onPressed: () async {
+                        await Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) =>
+                                RequestExpenseScreen(eventId: widget.event.id),
+                          ),
+                        );
+                        // When we return from the request screen, refresh the list
+                        _refreshExpenses();
+                      },
+                      icon: const Icon(Icons.add),
+                      label: const Text('Add Expense'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Theme.of(context).primaryColor,
+                        foregroundColor: Colors.white,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                // StreamBuilder for the Expenses List
+                StreamBuilder<List<Expense>>(
+                  stream: _supabaseService
+                      .getExpensesForEventStream(widget.event.id),
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return const Center(child: CircularProgressIndicator());
+                    }
+                    if (snapshot.hasError) {
+                      return Center(child: Text('Error: ${snapshot.error}'));
+                    }
+                    final expenses = snapshot.data;
+                    if (expenses == null || expenses.isEmpty) {
+                      return const Center(
+                          child: Padding(
+                        padding: EdgeInsets.all(32.0),
+                        child: Text('No expenses submitted yet.'),
+                      ));
+                    }
+
+                    final totalApprovedExpenses = expenses
+                        .where((exp) => exp.status == 'approved')
+                        .fold(0.0, (sum, item) => sum + item.amount);
+
+                    return Column(
+                      children: [
+                        // Budget Summary Card
+                        Card(
+                          child: Padding(
+                            padding: const EdgeInsets.all(16),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                const Text('Total Approved Expenses:',
+                                    style: TextStyle(fontSize: 16)),
+                                Text(
+                                  '₹${totalApprovedExpenses.toStringAsFixed(2)}',
+                                  style: const TextStyle(
+                                      fontSize: 18,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.green),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+                        // Expenses List
+                        ListView.builder(
+                          shrinkWrap: true,
+                          physics: const NeverScrollableScrollPhysics(),
+                          itemCount: expenses.length,
+                          itemBuilder: (context, index) {
+                            final expense = expenses[index];
+                            return _buildExpenseCard(context, expense);
+                          },
+                        ),
+                      ],
+                    );
+                  },
+                ),
+              ],
+            ),
+          ),
+        ));
   }
 
   // --- Helper Widgets ---

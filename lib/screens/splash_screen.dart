@@ -16,7 +16,9 @@ class SplashScreen extends StatelessWidget {
         // 1. While waiting for the initial auth state, show a loading indicator.
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Scaffold(
-            body: Center(child: CircularProgressIndicator()),
+            body: SafeArea(
+              child: Center(child: CircularProgressIndicator()),
+            ),
           );
         }
 
