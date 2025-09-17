@@ -151,4 +151,31 @@ class SupabaseService {
       'processed_at': DateTime.now().toIso8601String(),
     }).eq('id', expenseId);
   }
+
+  // Stream for the Counsellor's pending requests dashboard
+  Stream<List<Expense>> getPendingRequestsStream() {
+    // This stream listens for any changes on the 'expense_requests' table
+    return supabase
+        .from('expense_requests')
+        .stream(primaryKey: ['id']) // The primary key of the table is required
+        .eq('status', 'pending') // We only care about pending requests
+        .order('created_at', ascending: true)
+        .map((listOfMaps) {
+          // When new data arrives, convert it from a list of maps to a list of Expense objects
+          return listOfMaps
+              .map<Expense>((map) => Expense.fromJson(map))
+              .toList();
+        });
+  }
+
+  // Stream for the list of expenses on the Event Details screen
+  Stream<List<Expense>> getExpensesForEventStream(String eventId) {
+    return supabase
+        .from('expense_requests')
+        .stream(primaryKey: ['id'])
+        .eq('event_id', eventId) // Filter for the specific event
+        .order('created_at', ascending: false)
+        .map((listOfMaps) =>
+            listOfMaps.map<Expense>((map) => Expense.fromJson(map)).toList());
+  }
 }

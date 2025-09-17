@@ -14,19 +14,11 @@ class EventDetailsScreen extends StatefulWidget {
 
 class _EventDetailsScreenState extends State<EventDetailsScreen> {
   final SupabaseService _supabaseService = SupabaseService();
-  late Future<List<Expense>> _expensesFuture;
 
-  @override
-  void initState() {
-    super.initState();
-    _expensesFuture = _supabaseService.getExpensesForEvent(widget.event.id);
-  }
-
-  // Function to refresh the expenses list
+  // Function to refresh the expenses list (still useful for after adding expense)
   void _refreshExpenses() {
-    setState(() {
-      _expensesFuture = _supabaseService.getExpensesForEvent(widget.event.id);
-    });
+    // This method is kept for compatibility but may not be needed with streams
+    setState(() {});
   }
 
   @override
@@ -96,9 +88,10 @@ class _EventDetailsScreenState extends State<EventDetailsScreen> {
               ],
             ),
             const SizedBox(height: 16),
-            // FutureBuilder for the Expenses List
-            FutureBuilder<List<Expense>>(
-              future: _expensesFuture,
+            // StreamBuilder for the Expenses List
+            StreamBuilder<List<Expense>>(
+              stream:
+                  _supabaseService.getExpensesForEventStream(widget.event.id),
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return const Center(child: CircularProgressIndicator());
