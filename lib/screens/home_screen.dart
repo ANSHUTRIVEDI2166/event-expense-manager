@@ -239,8 +239,81 @@ class EventsList extends StatelessWidget {
               MaterialPageRoute(
                   builder: (context) => EventDetailsScreen(event: event)));
         },
+        onLongPress: () => _showEventOptions(context, event),
       ),
     );
+  }
+
+  Future<void> _showEventOptions(BuildContext context, Event event) async {
+    final canDelete = await _supabaseService.canUserDeleteEvent(event.id);
+
+    if (!canDelete) return; // Don't show menu if user can't delete
+
+    showModalBottomSheet(
+      context: context,
+      builder: (context) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.delete, color: Colors.red),
+              title: const Text('Delete Event'),
+              onTap: () {
+                Navigator.pop(context);
+                _showDeleteEventConfirmation(context, event);
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _showDeleteEventConfirmation(
+      BuildContext context, Event event) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Delete Event'),
+        content: Text(
+            'Are you sure you want to delete "${event.name}"? This action cannot be undone.'),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(context).pop(false),
+            child: const Text('Cancel'),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.of(context).pop(true),
+            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+            child: const Text('Delete', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      try {
+        await _supabaseService.deleteEvent(event.id);
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Event deleted successfully'),
+              backgroundColor: Colors.green,
+            ),
+          );
+          // The stream will automatically refresh the list
+        }
+      } catch (e) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Error deleting event: $e'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      }
+    }
   }
 
   String _formatDate(DateTime date) {

@@ -81,6 +81,32 @@ class SupabaseService {
     }
   }
 
+  Future<void> deleteEvent(String eventId) async {
+    await supabase.from('events').delete().eq('id', eventId);
+  }
+
+  Future<bool> canUserDeleteEvent(String eventId) async {
+    final userId = supabase.auth.currentUser!.id;
+
+    // Check if user is counselor
+    final profile = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', userId)
+        .single();
+
+    if (profile['role'] == 'counselor') return true;
+
+    // Check if user is event creator
+    final event = await supabase
+        .from('events')
+        .select('creator_id')
+        .eq('id', eventId)
+        .single();
+
+    return event['creator_id'] == userId;
+  }
+
   // --- Expense Functions ---
   Future<List<Expense>> getExpensesForEvent(String eventId) async {
     final response = await supabase
