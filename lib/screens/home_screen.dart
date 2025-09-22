@@ -14,19 +14,10 @@ class HomeScreen extends StatefulWidget {
 
 class _HomeScreenState extends State<HomeScreen> {
   final SupabaseService _supabaseService = SupabaseService();
-  // We use a single future that will be re-triggered by setState
-  late Future<void> _loadDataFuture;
 
   @override
   void initState() {
     super.initState();
-    _loadDataFuture = _loadData();
-  }
-
-  Future<void> _loadData() async {
-    // This function can be used to load all necessary data for the screen
-    await _supabaseService.getUserProfile();
-    await _supabaseService.getEvents();
   }
 
   Future<void> _signOut() async {
@@ -66,9 +57,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
             return RefreshIndicator(
               onRefresh: () async {
-                setState(() {
-                  _loadDataFuture = _loadData();
-                });
+                setState(() {});
               },
               child: CustomScrollView(
                 slivers: [
@@ -95,9 +84,7 @@ class _HomeScreenState extends State<HomeScreen> {
             context,
             MaterialPageRoute(builder: (context) => const AddEventScreen()),
           );
-          setState(() {
-            _loadDataFuture = _loadData();
-          });
+          setState(() {});
         },
         child: const Icon(Icons.add),
       ),

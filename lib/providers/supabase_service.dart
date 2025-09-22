@@ -1,6 +1,5 @@
 // Removed unused imports
 import '../models/event.dart';
-import '../models/expense.dart'; // ✅ Added missing Expense import
 import '../main.dart'; // Import main.dart to access the global supabase client
 
 class SupabaseService {
@@ -26,7 +25,7 @@ class SupabaseService {
         .select('role')
         .eq('id', userId)
         .single();
-    final role = profile != null ? profile['role'] : null;
+    final role = profile['role'];
 
     if (role == 'counselor') {
       // Counselors see all events
@@ -70,14 +69,12 @@ class SupabaseService {
     // Add all counselors as event members
     final counselors =
         await supabase.from('profiles').select('id').eq('role', 'counselor');
-    if (counselors != null && counselors is List) {
-      for (final counselor in counselors) {
-        await supabase.from('event_members').insert({
-          'event_id': eventId,
-          'user_id': counselor['id'],
-          'role': 'counselor'
-        });
-      }
+    for (final counselor in counselors) {
+      await supabase.from('event_members').insert({
+        'event_id': eventId,
+        'user_id': counselor['id'],
+        'role': 'counselor'
+      });
     }
   }
 
